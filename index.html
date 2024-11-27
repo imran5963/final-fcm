@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Cloud Messaging</title>
+  <title>Firebase FCM Modular Example</title>
 </head>
 <body>
-  <h1>FCM Push Notifications Demo</h1>
-  <button id="request-permission">Request Notification Permission</button>
+  <h1>Firebase FCM Modular Example</h1>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-messaging.js"></script>
+  <!-- Firebase Scripts -->
+  <script type="module">
+    // Import required functions from Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.25.0/firebase-app.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/9.25.0/firebase-messaging.js";
 
-  <script>
-    // Ensure Firebase SDK is loaded
-    console.log(firebase);
-
-    // Firebase configuration
+    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDQp8i-wb9PTnkIUmsCwn4xvcNiJCJmfS8",
       authDomain: "prodt-d73a4.firebaseapp.com",
@@ -29,58 +26,37 @@
     };
 
     // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+    const app = initializeApp(firebaseConfig);
 
-    // Request notification permission
-    document.getElementById('request-permission').addEventListener('click', () => {
-      Notification.requestPermission()
-        .then((permission) => {
-          if (permission === 'granted') {
-            console.log('Notification permission granted.');
-            registerServiceWorkerAndGetToken();
-          } else {
-            console.error('Notification permission denied.');
-          }
-        })
-        .catch((err) => console.error('Error requesting permission:', err));
+    // Initialize Messaging
+    const messaging = getMessaging(app);
+
+    // Request Notification Permission and Get FCM Token
+    async function getFCMToken() {
+      try {
+        const token = await getToken(messaging, {
+          vapidKey: "BMeeoaZLn3kdro5ba21vzTM6NnQ33JZG1jTjXRN8pUacDDsXT9U0qu5gxUcfW9Kf0oY5VmJsRJ6ZGNA5Xvq-e4Y"
+        });
+        if (token) {
+          console.log("FCM Token:", token);
+          // Send the token to your backend server for later use
+        } else {
+          console.warn("No registration token available. Request permission to generate one.");
+        }
+      } catch (error) {
+        console.error("Error while retrieving FCM token:", error);
+      }
+    }
+
+    // Request Notification Permission
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        console.log("Notification permission granted.");
+        getFCMToken();
+      } else {
+        console.error("Notification permission not granted.");
+      }
     });
-
-    // Register service worker and get FCM token
-    function registerServiceWorkerAndGetToken() {
-      navigator.serviceWorker
-        .register('/firebase-messaging-sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered with scope:', registration.scope);
-
-          // Get FCM token
-          return messaging.getToken({
-            vapidKey: 'BMeeoaZLn3kdro5ba21vzTM6NnQ33JZG1jTjXRN8pUacDDsXT9U0qu5gxUcfW9Kf0oY5VmJsRJ6ZGNA5Xvq-e4Y',
-            serviceWorkerRegistration: registration,
-          });
-        })
-        .then((token) => {
-          if (token) {
-            console.log('FCM Token:', token);
-            saveTokenToBackend(token); // Send token to backend
-          } else {
-            console.warn('No FCM token generated.');
-          }
-        })
-        .catch((err) => console.error('Error registering service worker or getting token:', err));
-    }
-
-    // Function to save the FCM token to your backend
-    function saveTokenToBackend(token) {
-      fetch('https://bumblebeex.prodt.co/api:Yf2mChG1:dev/fcm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      })
-        .then((response) => response.json())
-        .then((data) => console.log('Token saved successfully:', data))
-        .catch((error) => console.error('Error saving token to backend:', error));
-    }
   </script>
 </body>
 </html>
