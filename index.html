@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase FCM Modular Example</title>
+  <title>Firebase FCM Example</title>
 </head>
 <body>
-  <h1>Firebase FCM Modular Example</h1>
+  <h1>Firebase FCM Without Import Statements</h1>
 
-  <!-- Firebase Scripts -->
-  <script type="module">
-    // Import required functions from Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.25.0/firebase-app.js";
-    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/9.25.0/firebase-messaging.js";
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging.js"></script>
 
+  <script>
     // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDQp8i-wb9PTnkIUmsCwn4xvcNiJCJmfS8",
@@ -26,20 +26,19 @@
     };
 
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
+    const analytics = firebase.analytics();
+    const messaging = firebase.messaging();
 
-    // Initialize Messaging
-    const messaging = getMessaging(app);
-
-    // Request Notification Permission and Get FCM Token
-    async function getFCMToken() {
+    // Request Permission and Get FCM Token
+    async function requestFCMToken() {
       try {
-        const token = await getToken(messaging, {
+        const token = await messaging.getToken({
           vapidKey: "BMeeoaZLn3kdro5ba21vzTM6NnQ33JZG1jTjXRN8pUacDDsXT9U0qu5gxUcfW9Kf0oY5VmJsRJ6ZGNA5Xvq-e4Y"
         });
         if (token) {
           console.log("FCM Token:", token);
-          // Send the token to your backend server for later use
+          // Send the token to your backend server or store it for use
         } else {
           console.warn("No registration token available. Request permission to generate one.");
         }
@@ -48,13 +47,19 @@
       }
     }
 
+    // Listen for Incoming Messages
+    messaging.onMessage((payload) => {
+      console.log("Message received: ", payload);
+      // Optionally display a notification or update UI
+    });
+
     // Request Notification Permission
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
         console.log("Notification permission granted.");
-        getFCMToken();
+        requestFCMToken();
       } else {
-        console.error("Notification permission not granted.");
+        console.error("Notification permission denied.");
       }
     });
   </script>
